@@ -1,0 +1,7 @@
+flask
+flask-cors
+gunicorn
+requests
+selenium
+pillow
+2captcha-python

